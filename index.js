@@ -4,7 +4,7 @@ const cors = require("cors");
 const port = 5000;
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
-
+const jwt = require("jsonwebtoken");
 app.use(cors());
 app.use(express.json());
 
@@ -24,11 +24,24 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const reviewCollection = client.db("innovate").collection("review");
+    const servicesCollection = client.db("innovate").collection("services");
+
+    // jwt
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
+    });
 
     // review api
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       console.log(result);
+      res.send(result);
+    });
+    // services api
+
+    app.get("/services", async (req, res) => {
+      const result = await servicesCollection.find().toArray();
       res.send(result);
     });
 
