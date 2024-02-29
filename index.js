@@ -25,6 +25,8 @@ async function run() {
     await client.connect();
     const reviewCollection = client.db("innovate").collection("review");
     const servicesCollection = client.db("innovate").collection("services");
+    const cartsCollection = client.db("innovate").collection("carts");
+    const usersCollection = client.db("innovate").collection("users");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -33,7 +35,19 @@ async function run() {
       console.log(req.body);
       res.send({ token });
     });
-
+    // app.post("/users", async (res, req) => {
+    //   const user = req.body;
+    //   // const query = { email: user.email };
+    //   const result = await usersCollection.insertOne(user);
+    //   console.log(user);
+    //   res.send(result);
+    // });
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      console.log(user);
+      res.send(result);
+    });
     // review api
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
@@ -46,13 +60,17 @@ async function run() {
       const result = await servicesCollection.find().toArray();
       res.send(result);
     });
-    app.get("/services/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await servicesCollection.findOne(query);
+    // carts api
+    app.get("/carts", async (req, res) => {
+      const result = await cartsCollection.find().toArray();
       res.send(result);
     });
-
+    app.post("/carts", async (req, res) => {
+      const item = req.body;
+      const result = await cartsCollection.insertOne(item);
+      console.log(item);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
