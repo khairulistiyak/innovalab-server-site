@@ -8,6 +8,27 @@ const jwt = require("jsonwebtoken");
 app.use(cors());
 app.use(express.json());
 
+const verifyToken = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  console.log(authorization);
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unauthorize access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET,
+    (error,
+    (decoded) => {
+      if (error) {
+        res.status(401).send({ message: "unauthorize access" });
+      }
+      req.decoded = decoded;
+      next();
+    })
+  );
+};
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.1pit7hr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -32,16 +53,14 @@ async function run() {
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
-      console.log(req.body);
+      console.log(token);
       res.send({ token });
     });
-    // app.post("/users", async (res, req) => {
-    //   const user = req.body;
-    //   // const query = { email: user.email };
-    //   const result = await usersCollection.insertOne(user);
-    //   console.log(user);
-    //   res.send(result);
-    // });
+    // user api
+    app.get("/users", verifyToken, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -66,7 +85,7 @@ async function run() {
       res.send(result);
     });
     // carts api
-    app.get("/carts", async (req, res) => {
+    app.get("/carts", verifyToken, async (req, res) => {
       const result = await cartsCollection.find().toArray();
       res.send(result);
     });
